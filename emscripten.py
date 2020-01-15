@@ -275,7 +275,8 @@ def compute_minimal_runtime_initializer_and_exports(post, initializers, exports,
   post = post.replace('/*** RUN_GLOBAL_INITIALIZERS(); ***/', '\n'.join(["asm['" + x + "']();" for x in global_initializer_funcs(initializers)]))
 
   if shared.Settings.WASM:
-    # Declare all exports out to global JS scope so that JS library functions can access them in a way that minifies well with Closure
+    # Declare all exports out to global JS scope so that JS library functions can access them in a
+    # way that minifies well with Closure
     # e.g. var a,b,c,d,e,f;
     exports_that_are_not_initializers = [x for x in exports if x not in initializers]
     if shared.Settings.WASM_BACKEND:
@@ -1748,19 +1749,7 @@ asm["%(name)s"] = function() {%(runtime_assertions)s
         else:
           receiving += '\n'.join(['var ' + s + ' = Module["' + s + '"] = asm["' + s + '"];' for s in module_exports]) + '\n'
     else:
-      if shared.Settings.target_environment_may_be('node') and shared.Settings.target_environment_may_be('web'):
-        global_object = '(typeof process !== "undefined" ? global : this)'
-      elif shared.Settings.target_environment_may_be('node'):
-        global_object = 'global'
-      else:
-        global_object = 'this'
-
-      if shared.Settings.MINIMAL_RUNTIME:
-        module_assign = ''
-      else:
-        module_assign = 'Module[__exportedFunc] = '
-
-      receiving += 'for(var __exportedFunc in asm) ' + global_object + '[__exportedFunc] = ' + module_assign + 'asm[__exportedFunc];\n'
+      receiving.append('exportAsmFunctions(asm);')
   else:
     receiving += 'Module["asm"] = asm;\n'
     wrappers = []
@@ -2684,25 +2673,7 @@ asm["%(e)s"] = function() {%(assertions)s
         else:
           receiving += ['var ' + asmjs_mangle(s) + ' = Module["' + asmjs_mangle(s) + '"] = asm["' + s + '"];' for s in exports]
     else:
-      if shared.Settings.target_environment_may_be('node') and shared.Settings.target_environment_may_be('web'):
-        global_object = '(typeof process !== "undefined" ? global : this)'
-      elif shared.Settings.target_environment_may_be('node'):
-        global_object = 'global'
-      else:
-        global_object = 'this'
-
-      if shared.Settings.MINIMAL_RUNTIME:
-        module_assign = ''
-      else:
-        module_assign = 'Module[asmjs_mangle(__exportedFunc)] = '
-
-      receiving.append('''
-  function asmjs_mangle(x) {
-    var unmangledSymbols = %s;
-    return x.indexOf('dynCall_') == 0 || unmangledSymbols.indexOf(x) != -1 ? x : '_' + x;
-  }
-''' % shared.Settings.WASM_FUNCTIONS_THAT_ARE_NOT_NAME_MANGLED)
-      receiving.append('for(var __exportedFunc in asm) ' + global_object + '[asmjs_mangle(__exportedFunc)] = ' + module_assign + 'asm[__exportedFunc];')
+      receiving.append('exportAsmFunctions(asm);');
   else:
     receiving.append('Module["asm"] = asm;')
     for e in exports:
