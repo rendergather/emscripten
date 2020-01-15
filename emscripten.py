@@ -2673,7 +2673,7 @@ asm["%(e)s"] = function() {%(assertions)s
         else:
           receiving += ['var ' + asmjs_mangle(s) + ' = Module["' + asmjs_mangle(s) + '"] = asm["' + s + '"];' for s in exports]
     else:
-      receiving.append('exportAsmFunctions(asm);');
+      receiving.append('exportAsmFunctions(asm);')
   else:
     receiving.append('Module["asm"] = asm;')
     for e in exports:
