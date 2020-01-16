@@ -3131,7 +3131,7 @@ def do_binaryen(target, asm_target, options, memfile, wasm_binary_target,
                                            expensive_optimizations=will_metadce(options),
                                            minify_whitespace=optimizer.minify_whitespace,
                                            debug_info=intermediate_debug_info,
-                                           emitting_js=final_suffix not in WASM_ENDINGS)
+                                           emitting_js=not target.endswith(WASM_ENDINGS))
     save_intermediate_with_wasm('postclean', wasm_binary_target)
 
   if shared.Settings.ASYNCIFY_LAZY_LOAD_CODE:
